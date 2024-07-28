@@ -1,0 +1,5 @@
+node_modules
+/dist
+/server.bundle.cjs
+/sea-prep.blob
+/server.exe
