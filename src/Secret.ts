@@ -1,6 +1,10 @@
 import { Static, TSchema } from '@sinclair/typebox';
 import { Value } from '@sinclair/typebox/value';
 import { Decryptor, Encryptor } from './cryptography';
+import { SecretEnvelopeSchema } from './base-schema';
+import { AbstractFactory } from './AbstractFactory';
+
+export const secretAbstractFactory = new AbstractFactory<Secret<TSchema>, Buffer>();
 
 export abstract class Secret<Schema extends TSchema> {
     protected abstract schema: Schema;
@@ -13,16 +17,27 @@ export abstract class Secret<Schema extends TSchema> {
         const data = Value.Decode(this.schema, parsed);
         return data;
     }
+
+    toJSON(): Static<typeof SecretEnvelopeSchema> {
+        return {
+            type: this.getType(),
+            encryptedValue: this.encryptedValue.toString('base64'),
+        };
+    }
+
+    static fromJSON(type: string, encryptedValueString: string) {
+        return secretAbstractFactory.create(type, Buffer.from(encryptedValueString, 'base64'));
+    }
 }
 
-export class SecretFactory<Schema extends TSchema, SecretType extends Secret<Schema>> {
+export class Sealer<Schema extends TSchema, SecretType extends Secret<Schema>> {
     constructor(protected readonly schema: Schema, protected construct: (encryptedValue: Buffer) => SecretType) {}
 
     getSchema() {
         return this.schema;
     }
 
-    create(input: Static<Schema>, encryptor: Encryptor): SecretType {
+    seal(input: Static<Schema>, encryptor: Encryptor): SecretType {
         const validated = Value.Decode(this.schema, input);
         const plaintext = Buffer.from(JSON.stringify(validated), 'utf-8');
         return this.construct(encryptor.encrypt(plaintext));

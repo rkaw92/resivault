@@ -146,9 +146,12 @@ export class DefaultEncryptor {
     constructor(private provider: CryptoProvider, private key: KeyObject) {}
 
     encrypt(plaintext: Buffer): Buffer {
-        const cryptotext = this.provider.encrypt(plaintext, this.key);
-        plaintext.fill(0);
-        return cryptotext;
+        try {
+            const cryptotext = this.provider.encrypt(plaintext, this.key);
+            return cryptotext;
+        } finally {
+            plaintext.fill(0);
+        }
     }
 }
 
@@ -161,8 +164,11 @@ export class DefaultDecryptor implements Decryptor {
 
     decrypt<T>(cryptotext: Buffer, processValue: (plain: Buffer) => T): T {
         const plain = this.provider.decrypt(cryptotext, this.key);
-        const result = processValue(plain);
-        plain.fill(0);
-        return result;
+        try {
+            const result = processValue(plain);
+            return result;
+        } finally {
+            plain.fill(0);
+        }
     }
 }

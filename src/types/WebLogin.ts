@@ -1,6 +1,9 @@
-import { Type } from "@sinclair/typebox";
-import { Usage } from "../Usage";
+import { FormatRegistry, Type } from "@sinclair/typebox";
+import { Usage, usageAbstractFactory } from "../Usage";
 import { Tag } from "../Tag";
+import { Value } from '@sinclair/typebox/value';
+
+FormatRegistry.Set('uri', (value) => URL.canParse(value));
 
 const WebLoginSchema = Type.Object({
     url: Type.String({ format: 'uri' }),
@@ -25,4 +28,11 @@ export class WebLogin extends Usage<typeof WebLoginSchema> {
             return [];
         }
     }
+
+    static fromJSON(input: unknown) {
+        const details = Value.Decode(WebLoginSchema, input);
+        return new WebLogin(details);
+    }
 }
+
+usageAbstractFactory.register(WebLogin.type, (details) => WebLogin.fromJSON(details));
