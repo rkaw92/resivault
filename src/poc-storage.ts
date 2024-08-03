@@ -20,9 +20,9 @@ const myLogin = new Entry(
 );
 
 (async function() {
-    await vault.initializeNew('hunter2');
-    await vault.saveEntry(myLogin);
-    // await vault.unlock('hunter2');
-    // await vault.loadEntries();
-    // console.log('%j', vault.getEntry('cmj7v7tzoj4rx1kkkgisgxgl'));
+    // await vault.initializeNew('hunter2');
+    await vault.unlock('hunter2');
+    // await vault.saveEntry(myLogin);
+    await vault.loadEntries();
+    console.log('%j', vault.getEntry('cmj7v7tzoj4rx1kkkgisgxgl'));
 })()

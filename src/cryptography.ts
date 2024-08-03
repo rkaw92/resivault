@@ -224,7 +224,11 @@ export interface Encryptor {
     encrypt(plaintext: Buffer): Buffer;
 }
 
-export class DefaultEncryptor {
+export interface Decryptor {
+    decrypt<T>(cryptotext: Buffer, processValue: (plain: Buffer) => T): T;
+}
+
+export class DefaultEncDec {
     constructor(private provider: CryptoProvider, private key: KeyObject) {}
 
     encrypt(plaintext: Buffer): Buffer {
@@ -235,14 +239,6 @@ export class DefaultEncryptor {
             plaintext.fill(0);
         }
     }
-}
-
-export interface Decryptor {
-    decrypt<T>(cryptotext: Buffer, processValue: (plain: Buffer) => T): T;
-}
-
-export class DefaultDecryptor implements Decryptor {
-    constructor(private provider: CryptoProvider, private key: KeyObject) {}
 
     decrypt<T>(cryptotext: Buffer, processValue: (plain: Buffer) => T): T {
         const plain = this.provider.decrypt(cryptotext, this.key);
