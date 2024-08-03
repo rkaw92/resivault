@@ -56,8 +56,8 @@ export class Entry {
             my.id,
             my.name,
             my.tags,
-            Usage.fromJSON(my.usage.type, my.usage.details),
-            my.secrets.map((inputSecret) => Secret.fromJSON(inputSecret.type, inputSecret.encryptedValue)),
+            Usage.fromJSON(my.usage),
+            my.secrets.map((storedSecret) => Secret.fromJSON(storedSecret)),
         );
     }
 

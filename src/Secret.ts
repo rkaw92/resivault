@@ -25,8 +25,8 @@ export abstract class Secret<Schema extends TSchema> {
         };
     }
 
-    static fromJSON(type: string, encryptedValueString: string) {
-        return secretAbstractFactory.create(type, Buffer.from(encryptedValueString, 'base64'));
+    static fromJSON(input: Static<typeof SecretEnvelopeSchema>) {
+        return secretAbstractFactory.create(input.type, Buffer.from(input.encryptedValue, 'base64'));
     }
 }
 

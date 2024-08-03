@@ -29,7 +29,7 @@ export class WebLogin extends Usage<typeof WebLoginSchema> {
         }
     }
 
-    static fromJSON(input: unknown) {
+    static override fromJSON(input: unknown) {
         const details = Value.Decode(WebLoginSchema, input);
         return new WebLogin(details);
     }

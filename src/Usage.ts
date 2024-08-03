@@ -24,7 +24,7 @@ export abstract class Usage<Schema extends TSchema> {
         };
     }
 
-    static fromJSON(type: string, details: unknown) {
-        return usageAbstractFactory.create(type, details);
+    static fromJSON(input: Static<typeof UsageEnvelopeSchema>) {
+        return usageAbstractFactory.create(input.type, input.details);
     }
 }

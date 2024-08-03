@@ -1,6 +1,7 @@
 import { AES128OCB, DefaultDecryptor, DefaultEncryptor } from "./cryptography";
 import { Entry } from "./Entry";
-import { EntryStorage } from './persistence';
+import { EntryRepository } from './EntryRepository';
+import { Filesystem } from './storage';
 import { Password } from "./types/Password";
 import { WebLogin } from "./types/WebLogin";
 
@@ -27,8 +28,8 @@ for (const [ i, secret ] of myLogin.getSecrets().entries()) {
 }
 
 (async function() {
-    const storage = new EntryStorage(outerEncryptor, outerDecryptor, 'poc');
-    const path = await storage.save(myLogin);
-    const myLogin2 = await storage.load(path);
+    const repo = new EntryRepository(outerEncryptor, outerDecryptor, new Filesystem('poc'));
+    const path = await repo.save(myLogin);
+    const myLogin2 = await repo.load(path);
     console.log('%j', myLogin2);
 })()

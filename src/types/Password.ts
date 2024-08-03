@@ -6,7 +6,7 @@ const PasswordSchema = Type.String();
 export class Password extends Secret<typeof PasswordSchema> {
     protected schema = PasswordSchema;
     public static readonly sealer = new Sealer(PasswordSchema, (encryptedValue) => new Password(encryptedValue));
-    public static readonly type = 'password' as const;
+    public static readonly type = 'Password' as const;
 
     getType() {
         return Password.type;
