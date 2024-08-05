@@ -175,6 +175,14 @@ export class Vault {
         return entry.getId();
     }
 
+    async deleteEntry(id: string): Promise<void> {
+        if (!this.sensitiveData) {
+            throw new VaultNotUnlockedError();
+        }
+        await this.sensitiveData[kEntryRepository].delete(id);
+        this.sensitiveData[kEntries].delete(id);
+    }
+
     sealSecret<T extends TSchema>(type: string, label: string, input: Static<T>): Secret<T> {
         if (!this.sensitiveData) {
             throw new VaultNotUnlockedError();

@@ -25,32 +25,55 @@ export const routes: FastifyPluginAsyncTypebox<{
             body: Type.String(),
         }
     }, async function(req) {
+        // TODO: Alternatively support HTTP Basic Auth instead
         await vault.unlock(req.body);
         await vault.loadEntries();
     });
 
     // TODO: Extract this into a "sensitive routes" plugin!
 
-    app.get('/entry/:id', {
-        schema: {
-            params: Type.Object({
-                id: Type.String(),
-            })
-        }
-    }, async function(req) {
-        // TODO: Require session token!
-        return vault.getEntry(req.params.id);
-    });
-
     app.post('/entry', {
         schema: {
             body: EntrySchema,
         }
-    }, async function(req) {
-        await vault.saveEntry(Entry.fromJSON({
+    }, async function(req, reply) {
+        const entry = Entry.fromJSON({
             ...req.body,
             id: req.body.id || Entry.generateId(),
-        }));
+        });
+        await vault.saveEntry(entry);
+        reply.header('Location', `/entry/${entry.getId()}`);
+    });
+
+    app.get('/entry/:entryId', {
+        schema: {
+            params: Type.Object({
+                entryId: Type.String(),
+            })
+        }
+    }, async function(req, reply) {
+        // TODO: Require session token!
+        const entry = vault.getEntry(req.params.entryId);
+        if (!entry) {
+            reply.status(404);
+        }
+        return entry;
+    });
+
+    app.delete('/entry/:entryId', {
+        schema: {
+            params: Type.Object({
+                entryId: Type.String(),
+            }),
+            response: {
+                200: Type.Union([
+                    Password.schema,
+                    EncryptionKey.schema,
+                ])
+            }
+        },
+    }, async function(req, reply) {
+        await vault.deleteEntry(req.params.entryId);
     });
 
     app.post('/entry/:entryId/secret', {

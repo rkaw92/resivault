@@ -27,6 +27,10 @@ export class EntryRepository {
         });
     }
 
+    async delete(id: string): Promise<void> {
+        return this.storage.delete(id);
+    }
+
     async listKeys(): Promise<string[]> {
         return this.storage.listKeys();
     }

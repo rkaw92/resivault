@@ -1,4 +1,4 @@
-import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { readFile, writeFile, readdir, unlink } from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { getSystemErrorName } from 'node:util';
 import { isNativeError } from 'node:util/types';
@@ -9,6 +9,7 @@ import { StorageError } from './errors';
 export interface BlobStorage {
     save(key: string, data: Buffer): Promise<void>;
     load(key: string): Promise<Buffer | null>;
+    delete(key: string): Promise<void>;
     listKeys(): Promise<string[]>;
 }
 
@@ -33,6 +34,10 @@ export class Filesystem implements BlobStorage {
                 throw new StorageError(`Failed to load file by key: ${key}`);
             }
         }
+    }
+
+    async delete(key: string): Promise<void> {
+        await unlink(this.keyToPath(key));
     }
 
     async listKeys(): Promise<string[]> {
