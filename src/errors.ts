@@ -58,3 +58,9 @@ export class SecretTypeNotSupportedError extends AppError {
         super(`Secret type ${typeName} not supported`);
     }
 }
+
+export class SecretLabelAlreadyExistsError extends AppError {
+    constructor(label: string) {
+        super(`This entry already has a secret with label ${label}`);
+    }
+}

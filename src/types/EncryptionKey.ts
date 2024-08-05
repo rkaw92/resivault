@@ -21,6 +21,7 @@ class EncryptionKeySealer extends Sealer<typeof EncryptionKeySchema, EncryptionK
 
 export class EncryptionKey extends Secret<typeof EncryptionKeySchema> {
     protected schema = EncryptionKeySchema;
+    public static readonly schema = EncryptionKeySchema;
     public static readonly type = 'EncryptionKey' as const;
     public static readonly factory = encryptionKeyFactory;
     public static readonly sealer = new EncryptionKeySealer();

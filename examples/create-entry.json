@@ -1,0 +1,13 @@
+{
+    "id": "example1",
+    "name": "Web Shop 1",
+    "usage": {
+        "type": "WebLogin",
+        "details": {
+            "url": "https://example.com",
+            "username": "admin"
+        }
+    },
+    "tags": [],
+    "secrets": []
+}

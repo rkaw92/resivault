@@ -5,6 +5,7 @@ import { Usage } from "./Usage";
 import { createId as cuid2 } from '@paralleldrive/cuid2';
 import { EntrySchema } from './base-schema';
 import { Value } from '@sinclair/typebox/value';
+import { SecretLabelAlreadyExistsError } from './errors';
 
 /**
  * An Entry is a singular item in the user's encrypted vault. This is the smallest unit of synchronization.
@@ -45,6 +46,9 @@ export class Entry {
     }
 
     addSecret(secret: Secret<TSchema>) {
+        if (this.getSecret(secret.getLabel())) {
+            throw new SecretLabelAlreadyExistsError(secret.getLabel());
+        }
         this.secrets.push(secret);
     }
 
