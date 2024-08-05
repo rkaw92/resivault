@@ -2,10 +2,11 @@ import { createSecretKey, KeyObject, randomUUID } from 'node:crypto';
 import { AES128OCB, AES256KeyWrap, CryptoProvider, Decryptor, DefaultEncDec, Encryptor, PlaintextForMetadataOnly, ScryptKDFv1 } from './cryptography';
 import { BlobStorage } from './storage';
 import { Entry } from './Entry';
-import { VaultAccess } from './types/VaultAccess';
-import { EncryptionKey } from './types/EncryptionKey';
 import { EntryRepository } from './EntryRepository';
 import { CryptographyIncompatibleError, RootEntryMalformedError, RootEntryNotFoundError, VaultEntryNotFoundError, VaultNotUnlockedError } from './errors';
+import * as types from './types';
+import { Secret } from './Secret';
+import { Static, TSchema } from '@sinclair/typebox';
 
 const kEntryRepository = Symbol('kEntryRepository');
 const kInnerEncryptor = Symbol('kInnerEncryptor');
@@ -69,14 +70,14 @@ export class Vault {
             this.ROOT_ENTRY_ID,
             '(this vault)',
             [],
-            new VaultAccess({
+            new types.VaultAccess({
                 vaultId: vaultId,
                 kdf: this.providers.kdf.getName(),
                 saltBase64: salt.toString('base64'),
             }),
             [
-                EncryptionKey.sealer.seal({ base64: outerKey.export().toString('base64') }, keyEncryptor),
-                EncryptionKey.sealer.seal({ base64: innerKey.export().toString('base64') }, keyEncryptor),
+                types.EncryptionKey.sealer.seal({ base64: outerKey.export().toString('base64') }, keyEncryptor),
+                types.EncryptionKey.sealer.seal({ base64: innerKey.export().toString('base64') }, keyEncryptor),
             ]
         );
         await this.metaRepository.save(rootEntry);
@@ -92,7 +93,7 @@ export class Vault {
             throw new RootEntryNotFoundError();
         }
         const access = rootEntry.getUsage();
-        if (!(access instanceof VaultAccess)) {
+        if (!(access instanceof types.VaultAccess)) {
             throw new RootEntryMalformedError('Usage type must be VaultAccess');
         }
         if (access.getDetails().kdf !== this.providers.kdf.getName()) {
@@ -106,10 +107,10 @@ export class Vault {
         if (!outerKeySecret || !innerKeySecret) {
             throw new RootEntryMalformedError('wrong number of secrets in root entry, must have 2')
         }
-        if (!(outerKeySecret instanceof EncryptionKey)) {
+        if (!(outerKeySecret instanceof types.EncryptionKey)) {
             throw new RootEntryMalformedError('outer key is not an EncryptionKey');
         }
-        if (!(innerKeySecret instanceof EncryptionKey)) {
+        if (!(innerKeySecret instanceof types.EncryptionKey)) {
             throw new RootEntryMalformedError('inner key is not an EncryptionKey');
         }
         const keyDecryptor = new DefaultEncDec(this.providers.key, kek);
@@ -169,6 +170,21 @@ export class Vault {
         await this.sensitiveData[kEntryRepository].save(entry);
         this.sensitiveData[kEntries].set(entry.getId(), entry);
         return entry.getId();
+    }
+
+    sealSecret<T extends TSchema>(type: string, input: Static<T>): Secret<T> {
+        if (!this.sensitiveData) {
+            throw new VaultNotUnlockedError();
+        }
+        const sealer = Secret.getSealer(type);
+        return sealer.seal(input, this.sensitiveData[kInnerEncryptor]) as Secret<T>;
+    }
+
+    revealSecret<T extends TSchema>(secret: Secret<T>): Static<T> {
+        if (!this.sensitiveData) {
+            throw new VaultNotUnlockedError();
+        }
+        return secret.reveal(this.sensitiveData[kInnerDecryptor]);
     }
 
     async lock() {

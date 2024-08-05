@@ -46,3 +46,9 @@ export class VaultEntryNotFoundError extends AppError {
         super(`Vault entry file ${id} not found in storage`);
     }
 }
+
+export class SecretTypeNotSupportedError extends AppError {
+    constructor(typeName: string) {
+        super(`Secret type ${typeName} not supported`);
+    }
+}

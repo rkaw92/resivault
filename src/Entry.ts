@@ -1,4 +1,4 @@
-import { Static, TSchema, Type } from "@sinclair/typebox";
+import { Static, TSchema } from "@sinclair/typebox";
 import { Secret } from "./Secret";
 import { Tag } from "./Tag";
 import { Usage } from "./Usage";
@@ -39,6 +39,12 @@ export class Entry {
     getSecrets() {
         return this.secrets.slice();
     }
+
+    addSecret(secret: Secret<TSchema>) {
+        this.secrets.push(secret);
+    }
+
+    // TODO: Secret removal
 
     toJSON(): Static<typeof EntrySchema> {
         return Value.Encode(EntrySchema, {

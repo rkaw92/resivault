@@ -1,14 +1,16 @@
 import { Static, Type } from "@sinclair/typebox";
-import { Secret, Sealer, secretAbstractFactory } from "../Secret";
+import { Secret, Sealer } from "../Secret";
 import { Decryptor, Encryptor } from '../cryptography';
 
 const EncryptionKeySchema = Type.Object({
     base64: Type.String(),
 });
 
+const encryptionKeyFactory = (encryptedValue: Buffer) => new EncryptionKey(encryptedValue);
+
 class EncryptionKeySealer extends Sealer<typeof EncryptionKeySchema, EncryptionKey> {
     constructor() {
-        super(EncryptionKeySchema, (encryptedValue) => new EncryptionKey(encryptedValue));
+        super(EncryptionKeySchema, encryptionKeyFactory);
     }
     
     override seal(input: Static<typeof EncryptionKeySchema>, encryptor: Encryptor): EncryptionKey {
@@ -19,8 +21,9 @@ class EncryptionKeySealer extends Sealer<typeof EncryptionKeySchema, EncryptionK
 
 export class EncryptionKey extends Secret<typeof EncryptionKeySchema> {
     protected schema = EncryptionKeySchema;
-    public static readonly sealer = new EncryptionKeySealer();
     public static readonly type = 'EncryptionKey' as const;
+    public static readonly factory = encryptionKeyFactory;
+    public static readonly sealer = new EncryptionKeySealer();
 
     getType() {
         return EncryptionKey.type;
@@ -31,4 +34,4 @@ export class EncryptionKey extends Secret<typeof EncryptionKeySchema> {
     }
 }
 
-secretAbstractFactory.register(EncryptionKey.type, (encryptedValue) => new EncryptionKey(encryptedValue));
+Secret.registerType(EncryptionKey);

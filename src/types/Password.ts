@@ -1,10 +1,11 @@
 import { Type } from "@sinclair/typebox";
-import { Secret, Sealer, secretAbstractFactory } from "../Secret";
+import { Secret, Sealer } from "../Secret";
 
 const PasswordSchema = Type.String();
 
 export class Password extends Secret<typeof PasswordSchema> {
     protected schema = PasswordSchema;
+    public static readonly factory = (encryptedValue: Buffer) => new Password(encryptedValue);
     public static readonly sealer = new Sealer(PasswordSchema, (encryptedValue) => new Password(encryptedValue));
     public static readonly type = 'Password' as const;
 
@@ -13,4 +14,4 @@ export class Password extends Secret<typeof PasswordSchema> {
     }
 }
 
-secretAbstractFactory.register(Password.type, (encryptedValue) => new Password(encryptedValue));
+Secret.registerType(Password);

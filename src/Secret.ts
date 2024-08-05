@@ -3,8 +3,16 @@ import { Value } from '@sinclair/typebox/value';
 import { Decryptor, Encryptor } from './cryptography';
 import { SecretEnvelopeSchema } from './base-schema';
 import { AbstractFactory } from './AbstractFactory';
+import { SecretTypeNotSupportedError } from './errors';
 
-export const secretAbstractFactory = new AbstractFactory<Secret<TSchema>, Buffer>();
+const secretAbstractFactory = new AbstractFactory<Secret<TSchema>, Buffer>();
+const sealersByType = new Map<string, Sealer<TSchema, Secret<TSchema>>>();
+
+interface Registerable {
+    type: string;
+    factory: (encryptedValue: Buffer) => Secret<TSchema>;
+    sealer: Sealer<TSchema, Secret<TSchema>>;
+}
 
 export abstract class Secret<Schema extends TSchema> {
     protected abstract schema: Schema;
@@ -25,8 +33,21 @@ export abstract class Secret<Schema extends TSchema> {
         };
     }
 
-    static fromJSON(input: Static<typeof SecretEnvelopeSchema>) {
+    static registerType(secretImpl: Registerable): void {
+        secretAbstractFactory.register(secretImpl.type, secretImpl.factory);
+        sealersByType.set(secretImpl.type, secretImpl.sealer);
+    }
+
+    static fromJSON(input: Static<typeof SecretEnvelopeSchema>): Secret<TSchema> {
         return secretAbstractFactory.create(input.type, Buffer.from(input.encryptedValue, 'base64'));
+    }
+
+    static getSealer(typeName: string): Sealer<TSchema, Secret<TSchema>> {
+        const sealer = sealersByType.get(typeName);
+        if (!sealer) {
+            throw new SecretTypeNotSupportedError(typeName);
+        }
+        return sealer;
     }
 }
 
