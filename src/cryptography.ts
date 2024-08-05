@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createSecretKey, DecipherOCB, KeyObject, randomBytes, scryptSync } from 'node:crypto';
+import { CryptoError } from './errors';
 
 export interface CryptoProvider {
     generateKey(): KeyObject;
@@ -235,17 +236,24 @@ export class DefaultEncDec {
         try {
             const cryptotext = this.provider.encrypt(plaintext, this.key);
             return cryptotext;
+        } catch (err) {
+            throw new CryptoError(err);
         } finally {
             plaintext.fill(0);
         }
     }
 
     decrypt<T>(cryptotext: Buffer, processValue: (plain: Buffer) => T): T {
-        const plain = this.provider.decrypt(cryptotext, this.key);
+        let plain: Buffer;
+        try {
+            plain = this.provider.decrypt(cryptotext, this.key);
+        } catch (err) {
+            throw new CryptoError(err);
+        }
         try {
             const result = processValue(plain);
             return result;
-        } finally {
+        }  finally {
             plain.fill(0);
         }
     }

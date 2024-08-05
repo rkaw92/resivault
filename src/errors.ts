@@ -29,6 +29,12 @@ export class RootEntryMalformedError extends AppError {
     }
 }
 
+export class CryptoError extends AppError {
+    constructor(cause?: unknown) {
+        super('Encryption/decryption failed - wrong key or password?', cause instanceof Error ? cause : undefined);
+    }
+}
+
 export class CryptographyIncompatibleError extends AppError {
     constructor(specificReason: string) {
         super(`Cannot open vault - incompatible cryptographic settings: ${specificReason}`);
