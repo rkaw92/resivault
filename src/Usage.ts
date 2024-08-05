@@ -4,7 +4,7 @@ import { UsageEnvelopeSchema } from './base-schema';
 import { AbstractFactory } from './AbstractFactory';
 import { Value } from '@sinclair/typebox/value';
 
-export const usageAbstractFactory = new AbstractFactory<Usage<TSchema>, unknown>();
+export const usageAbstractFactory = new AbstractFactory<Usage<TSchema>, [ unknown ]>();
 
 export abstract class Usage<Schema extends TSchema> {
     protected abstract schema: Schema;

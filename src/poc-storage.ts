@@ -1,6 +1,5 @@
 import { Entry } from './Entry';
 import { Filesystem } from './storage';
-import { Password } from './types/Password';
 import { WebLogin } from './types/WebLogin';
 import { Vault } from './Vault';
 
@@ -20,10 +19,10 @@ const myLogin = new Entry(
 );
 
 (async function() {
-    // await vault.initializeNew('hunter2');
+    await vault.initializeNew('hunter2');
     await vault.unlock('hunter2');
-    // myLogin.addSecret(vault.sealSecret('Password', 'myVeryPrivatePassword123!@#'));
-    // await vault.saveEntry(myLogin);
+    myLogin.addSecret(vault.sealSecret('Password', '', 'myVeryPrivatePassword123!@#'));
+    await vault.saveEntry(myLogin);
     await vault.loadEntries();
     console.log('%j', vault.getEntry('cmj7v7tzoj4rx1kkkgisgxgl'));
     console.log('Password: %s', vault.revealSecret(

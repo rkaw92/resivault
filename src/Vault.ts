@@ -13,6 +13,9 @@ const kInnerEncryptor = Symbol('kInnerEncryptor');
 const kInnerDecryptor = Symbol('kInnerDecryptor');
 const kEntries = Symbol('kEntries');
 
+const LABEL_OUTER_KEY = 'outer';
+const LABEL_INNER_KEY = 'inner';
+
 class VaultSensitivePart {
     public [kEntryRepository]: EntryRepository;
     public [kInnerEncryptor]: Encryptor;
@@ -76,8 +79,8 @@ export class Vault {
                 saltBase64: salt.toString('base64'),
             }),
             [
-                types.EncryptionKey.sealer.seal({ base64: outerKey.export().toString('base64') }, keyEncryptor),
-                types.EncryptionKey.sealer.seal({ base64: innerKey.export().toString('base64') }, keyEncryptor),
+                types.EncryptionKey.sealer.seal(LABEL_OUTER_KEY, { base64: outerKey.export().toString('base64') }, keyEncryptor),
+                types.EncryptionKey.sealer.seal(LABEL_INNER_KEY, { base64: innerKey.export().toString('base64') }, keyEncryptor),
             ]
         );
         await this.metaRepository.save(rootEntry);
@@ -102,8 +105,8 @@ export class Vault {
         }
         const kdfSalt = Buffer.from(access.getSalt());
         const kek = this.providers.kdf.deriveKey(password, kdfSalt, this.providers.key.keyBytes());
-        const rootSecrets = rootEntry.getSecrets();
-        const [ outerKeySecret, innerKeySecret ] = rootSecrets;
+        const outerKeySecret = rootEntry.getSecret(LABEL_OUTER_KEY);
+        const innerKeySecret = rootEntry.getSecret(LABEL_INNER_KEY);
         if (!outerKeySecret || !innerKeySecret) {
             throw new RootEntryMalformedError('wrong number of secrets in root entry, must have 2')
         }
@@ -172,12 +175,12 @@ export class Vault {
         return entry.getId();
     }
 
-    sealSecret<T extends TSchema>(type: string, input: Static<T>): Secret<T> {
+    sealSecret<T extends TSchema>(type: string, label: string, input: Static<T>): Secret<T> {
         if (!this.sensitiveData) {
             throw new VaultNotUnlockedError();
         }
         const sealer = Secret.getSealer(type);
-        return sealer.seal(input, this.sensitiveData[kInnerEncryptor]) as Secret<T>;
+        return sealer.seal(label, input, this.sensitiveData[kInnerEncryptor]) as Secret<T>;
     }
 
     revealSecret<T extends TSchema>(secret: Secret<T>): Static<T> {

@@ -6,16 +6,16 @@ const EncryptionKeySchema = Type.Object({
     base64: Type.String(),
 });
 
-const encryptionKeyFactory = (encryptedValue: Buffer) => new EncryptionKey(encryptedValue);
+const encryptionKeyFactory = (label: string, encryptedValue: Buffer) => new EncryptionKey(label, encryptedValue);
 
 class EncryptionKeySealer extends Sealer<typeof EncryptionKeySchema, EncryptionKey> {
     constructor() {
         super(EncryptionKeySchema, encryptionKeyFactory);
     }
     
-    override seal(input: Static<typeof EncryptionKeySchema>, encryptor: Encryptor): EncryptionKey {
+    override seal(label: string, input: Static<typeof EncryptionKeySchema>, encryptor: Encryptor): EncryptionKey {
         const plaintext = Buffer.from(input.base64, 'base64');
-        return this.construct(encryptor.encrypt(plaintext));
+        return this.factory(label, encryptor.encrypt(plaintext));
     }
 }
 

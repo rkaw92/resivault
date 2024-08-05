@@ -12,6 +12,7 @@ export const UsageEnvelopeSchema = Type.Object({
 
 export const SecretEnvelopeSchema = Type.Object({
     type: Type.String(),
+    label: Type.String(),
     encryptedValue: Type.String(),
 });
 

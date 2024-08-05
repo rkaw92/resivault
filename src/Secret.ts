@@ -5,20 +5,28 @@ import { SecretEnvelopeSchema } from './base-schema';
 import { AbstractFactory } from './AbstractFactory';
 import { SecretTypeNotSupportedError } from './errors';
 
-const secretAbstractFactory = new AbstractFactory<Secret<TSchema>, Buffer>();
+interface SecretFactory<SecretType extends Secret<TSchema> = Secret<TSchema>> {
+    (label: string, encryptedValue: Buffer): SecretType;
+}
+
+const secretAbstractFactory = new AbstractFactory<Secret<TSchema>, [ string, Buffer ]>();
 const sealersByType = new Map<string, Sealer<TSchema, Secret<TSchema>>>();
 
 interface Registerable {
     type: string;
-    factory: (encryptedValue: Buffer) => Secret<TSchema>;
+    factory: SecretFactory;
     sealer: Sealer<TSchema, Secret<TSchema>>;
 }
 
 export abstract class Secret<Schema extends TSchema> {
     protected abstract schema: Schema;
-    constructor(protected encryptedValue: Buffer) {}
+    constructor(protected label: string, protected encryptedValue: Buffer) {}
 
     abstract getType(): string;
+
+    getLabel(): string {
+        return this.label;
+    }
 
     reveal(decryptor: Decryptor): Static<Schema> {
         const parsed = decryptor.decrypt(this.encryptedValue, (raw) => JSON.parse(raw.toString('utf-8')));
@@ -29,6 +37,7 @@ export abstract class Secret<Schema extends TSchema> {
     toJSON(): Static<typeof SecretEnvelopeSchema> {
         return {
             type: this.getType(),
+            label: this.getLabel(),
             encryptedValue: this.encryptedValue.toString('base64'),
         };
     }
@@ -39,7 +48,7 @@ export abstract class Secret<Schema extends TSchema> {
     }
 
     static fromJSON(input: Static<typeof SecretEnvelopeSchema>): Secret<TSchema> {
-        return secretAbstractFactory.create(input.type, Buffer.from(input.encryptedValue, 'base64'));
+        return secretAbstractFactory.create(input.type, input.label, Buffer.from(input.encryptedValue, 'base64'));
     }
 
     static getSealer(typeName: string): Sealer<TSchema, Secret<TSchema>> {
@@ -52,15 +61,18 @@ export abstract class Secret<Schema extends TSchema> {
 }
 
 export class Sealer<Schema extends TSchema, SecretType extends Secret<Schema>> {
-    constructor(protected readonly schema: Schema, protected construct: (encryptedValue: Buffer) => SecretType) {}
+    constructor(
+        protected readonly schema: Schema,
+        protected factory: SecretFactory<SecretType>
+    ) {}
 
     getSchema() {
         return this.schema;
     }
 
-    seal(input: Static<Schema>, encryptor: Encryptor): SecretType {
+    seal(label: string, input: Static<Schema>, encryptor: Encryptor): SecretType {
         const validated = Value.Decode(this.schema, input);
         const plaintext = Buffer.from(JSON.stringify(validated), 'utf-8');
-        return this.construct(encryptor.encrypt(plaintext));
+        return this.factory(label, encryptor.encrypt(plaintext));
     }
 }

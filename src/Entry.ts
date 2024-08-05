@@ -39,12 +39,26 @@ export class Entry {
     getSecrets() {
         return this.secrets.slice();
     }
+    
+    getSecret(label: string) {
+        return this.secrets.find((secret) => secret.getLabel() === label) ?? null;
+    }
 
     addSecret(secret: Secret<TSchema>) {
         this.secrets.push(secret);
     }
 
-    // TODO: Secret removal
+    deleteSecret(label: string): Secret<TSchema> | null {
+        const index = this.secrets.findIndex((secret) => secret.getLabel() === label);
+        if (index === -1) {
+            return null;
+        }
+        return this.secrets.splice(index, 1)[0] ?? null;
+    }
+
+    clearSecrets() {
+        this.secrets.length = 0;
+    }
 
     toJSON(): Static<typeof EntrySchema> {
         return Value.Encode(EntrySchema, {
