@@ -12,6 +12,7 @@
   "author": "Robert Kawecki <robert+public@rkaw.pl>",
   "license": "MIT",
   "dependencies": {
+    "@fastify/type-provider-typebox": "^4.0.0",
     "@paralleldrive/cuid2": "^2.2.2",
     "@sinclair/typebox": "^0.32.35",
     "ajv": "^8.17.1",

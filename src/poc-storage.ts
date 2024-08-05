@@ -12,10 +12,7 @@ const myLogin = new Entry(
     'Widgets shop',
     [],
     new WebLogin({ url: 'https://shop.example.com/', username: 'user@example.com' }),
-    [
-        // TODO: Add an API for attaching a secret to an Entry
-        // Password.sealer.seal('foobar', innerEncryptor),
-    ]
+    []
 );
 
 (async function() {
