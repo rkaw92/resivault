@@ -72,3 +72,16 @@ export class UnauthorizedError extends AppError {
         super('Authorization token not present in request headers');
     }
 }
+
+export class VaultAlreadyInitializedError extends AppError {
+    public override readonly statusCode = 409;
+    constructor() {
+        super('Vault already initialized - refusing to overwrite metadata');
+    }
+}
+
+export class PasswordNotProvidedError extends AppError {
+    constructor() {
+        super('Vault password was not provided on input - required in request body or as basic auth password');
+    }
+}

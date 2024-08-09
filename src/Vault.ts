@@ -63,6 +63,11 @@ export class Vault {
         );
     }
 
+    async isInitialized() {
+        const keys = await this.metaRepository.listKeys();
+        return keys.includes(this.ROOT_ENTRY_ID);
+    }
+
     async initializeNew(password: string) {
         const { key: kek, salt } = this.providers.kdf.deriveNewKey(password, this.providers.key.keyBytes());
         const keyEncryptor = new DefaultEncDec(this.providers.key, kek);

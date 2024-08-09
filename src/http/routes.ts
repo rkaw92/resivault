@@ -4,6 +4,8 @@ import { sensitiveRoutes } from './routes-sensitive';
 import { VaultAuthToken } from '../VaultAuthToken';
 import fastifyCookie from '@fastify/cookie';
 import { negotiate } from '@fastify/accept-negotiator';
+import { PasswordNotProvidedError, VaultAlreadyInitializedError } from '../errors';
+import { FastifyRequest } from 'fastify';
 
 function parseBasicAuth(headerValue: string) {
     if (!headerValue || !headerValue.startsWith('Basic ')) {
@@ -11,6 +13,21 @@ function parseBasicAuth(headerValue: string) {
     }
     const [ _user, ...password ] = Buffer.from(headerValue.slice(6).trim(), 'base64').toString('utf-8').split(':');
     return password.join();
+}
+
+function readPasswordFromRequest(req: FastifyRequest): string {
+    let password;
+    if (typeof req.body === 'string' && req.body) {
+        password = req.body;
+    } else if (typeof req.body === 'object' && req.body) {
+        password = (req.body as any).password;
+    } else if (req.headers.authorization) {
+        password = parseBasicAuth(req.headers.authorization);
+    }
+    if (!password) {
+        throw new PasswordNotProvidedError();
+    }
+    return password;
 }
 
 export const routes: FastifyPluginAsyncTypebox<{
@@ -25,6 +42,7 @@ export const routes: FastifyPluginAsyncTypebox<{
         schema: {
             response: {
                 200: Type.Object({
+                    initialized: Type.Boolean(),
                     unlocked: Type.Boolean(),
                     sessions: Type.Integer(),
                 })
@@ -32,12 +50,28 @@ export const routes: FastifyPluginAsyncTypebox<{
         }
     }, async function() {
         return {
+            initialized: await vault.isInitialized(),
             unlocked: vault.isUnlocked(),
             sessions: tokens.size,
         };
     });
 
-    // TODO: vault init route
+    app.post('/initialize', {
+        schema: {
+            body: Type.Union([
+                Type.String(),
+                Type.Object({
+                    password: Type.String({  maxLength: 128 }),
+                }),
+            ]),
+        }
+    }, async function(req, reply) {
+        if (await vault.isInitialized()) {
+            throw new VaultAlreadyInitializedError();
+        }
+        const password = readPasswordFromRequest(req);
+        await vault.initializeNew(password);
+    });
 
     app.post('/unlock', {
         schema: {
@@ -69,17 +103,7 @@ export const routes: FastifyPluginAsyncTypebox<{
             }
         }
     }, async function(req, reply) {
-        let password;
-        if (typeof req.body === 'string' && req.body) {
-            password = req.body;
-        } else if (typeof req.body === 'object' && req.body) {
-            password = req.body.password;
-        } else if (req.headers.authorization) {
-            password = parseBasicAuth(req.headers.authorization);
-        }
-        if (!password) {
-            return reply.status(400).send('Missing password on input - required in body or as basic auth password');
-        }
+        const password = readPasswordFromRequest(req);
         await vault.unlock(password);
         await vault.loadEntries();
         const issuedToken = new VaultAuthToken();
