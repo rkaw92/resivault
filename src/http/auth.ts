@@ -2,7 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { UnauthorizedError } from '../errors';
 import { VaultAuthToken } from '../VaultAuthToken';
 
-function parseAuthHeader(headerValue: string | undefined) {
+function parseBearerAuth(headerValue: string | undefined) {
     if (!headerValue) {
         return undefined;
     }
@@ -14,7 +14,7 @@ function parseAuthHeader(headerValue: string | undefined) {
 
 export function createAuthenticator(recognizedTokens: Set<VaultAuthToken>) {
     return async function authenticate(req: FastifyRequest, reply: FastifyReply) {
-        const headerValue = parseAuthHeader(req.headers.authorization);
+        const headerValue = parseBearerAuth(req.headers.authorization);
         const cookieValue = req.cookies.token;
         const tokenValue = headerValue ?? cookieValue;
         if (!tokenValue) {

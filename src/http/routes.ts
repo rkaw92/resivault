@@ -26,11 +26,15 @@ export const routes: FastifyPluginAsyncTypebox<{
             response: {
                 200: Type.Object({
                     unlocked: Type.Boolean(),
+                    sessions: Type.Integer(),
                 })
             }
         }
     }, async function() {
-        return { unlocked: vault.isUnlocked() };
+        return {
+            unlocked: vault.isUnlocked(),
+            sessions: tokens.size,
+        };
     });
 
     // TODO: vault init route
