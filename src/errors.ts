@@ -3,6 +3,7 @@ export const ERROR_CODES = {
 } as const;
 
 export class AppError extends Error {
+    public readonly statusCode: number = 500;
     public override readonly name;
     constructor(message: string, public override readonly cause?: Error) {
         super(message + (cause ? ` (cause: ${cause.message ?? 'unknown'})` : ''));
@@ -42,6 +43,7 @@ export class CryptographyIncompatibleError extends AppError {
 }
 
 export class VaultNotUnlockedError extends AppError {
+    public override readonly statusCode = 400;
     constructor() {
         super('Vault not unlocked');
     }
@@ -62,5 +64,11 @@ export class SecretTypeNotSupportedError extends AppError {
 export class SecretLabelAlreadyExistsError extends AppError {
     constructor(label: string) {
         super(`This entry already has a secret with label ${label}`);
+    }
+}
+export class UnauthorizedError extends AppError {
+    public override readonly statusCode = 401;
+    constructor() {
+        super('Authorization token not present in request headers');
     }
 }

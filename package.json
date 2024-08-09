@@ -12,6 +12,8 @@
   "author": "Robert Kawecki <robert+public@rkaw.pl>",
   "license": "MIT",
   "dependencies": {
+    "@fastify/accept-negotiator": "^1.1.0",
+    "@fastify/cookie": "^9.3.1",
     "@fastify/type-provider-typebox": "^4.0.0",
     "@paralleldrive/cuid2": "^2.2.2",
     "@sinclair/typebox": "^0.32.35",
