@@ -76,7 +76,7 @@ export class UnauthorizedError extends AppError {
 export class VaultAlreadyInitializedError extends AppError {
     public override readonly statusCode = 409;
     constructor() {
-        super('Vault already initialized - refusing to overwrite metadata');
+        super('Vault already initialized - refusing to overwrite file root.meta');
     }
 }
 
